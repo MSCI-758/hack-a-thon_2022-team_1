@@ -1,0 +1,62 @@
+---
+title: "Team1-PriorityUseCause-Final.Rmd"
+author: "Madeleine Thompson, Amadi Afua Sefah-Twerefour, Paul Ernst, Maggie Gaspar"
+date: "4/12/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width=6, fig.asp = 0.618, collapse=TRUE) 
+```
+
+# Examining the Relationship between Priority, Use, and Cause in South Carolina Watersheds in 2018.
+
+### By Madeleine Thompson, Amadi Afua Sefah-Twerefour, Paul Ernst, & Maggie Gaspar
+
+***
+
+### 1. Introduction.
+
+Blah blah blah
+
+***
+
+### 2. Results & Discussion.
+
+#### 2.1. Spatial Context.
+
+To begin our investigation, we map the watersheds of South Carolina by Priority Rank, Use, and Cause, as stated in section 1 above. These are Figures 1, 2, and 3 respectively below:
+
+[Figure 1: Priority by watershed]
+Figure 1: Blah
+
+[Figure 2: Use by watershed]
+Figure 2: Blah
+
+[Figure 3: Cause by watershed]
+Figure 3: Blah
+
+We find that [blah].
+
+#### 2.2. Relationship between [blah].
+
+[Figures exploring relationship further]
+
+#### 2.3. [Extra results section if necessary]
+
+***
+
+### 3. Conclusion.
+
+[Blah]
+
+***
+
+### 4. Works Cited.
+
+[Blah]
+
+
+
+
+

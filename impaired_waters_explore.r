@@ -1,5 +1,6 @@
 # hack-a-thon 2022
 
+install.packages('sf')
 library(tidyverse)
 library(sf)
 
@@ -30,8 +31,10 @@ dim(imp) # 1979-861 = 1118 rows
 
 # Plot locations of impaired waters and stations that are not on the list (either bc they meet water quality standards or have a TMDL)
 # TMDL = Total Maximum Daily Load - indicates site where approved pollutant limits have been identified and waters are being managed to meet these TMDL
+
+
 ggplot() +
-  geom_sf(data=shp, aes(color=STATUS))
+  geom_sf(data=shp_imp, aes(color=STATUS))
 
 # Plot boundaries of 8 major river basins in SC
 ggplot() +

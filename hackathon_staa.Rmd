@@ -1,0 +1,166 @@
+---
+title: "hackaton_staa"
+author: "dawnstaa"
+date: "4/13/2022"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width=6, fig.asp = 0.618, collapse=TRUE)
+```
+
+### Loading needed libraries
+```{r message=FALSE}
+#Libraries
+library(tidyverse)
+library(raster)
+library(mapdata)  
+library(marmap)
+library(sf)
+```
+
+###  Reading in csv for 2018 and 2016 
+
+```{r}
+#using read_csv removes dots from column names
+imp_2018 = read_csv("data/2018303d_final.csv") # SC Impaired Waters List 303d for 2018
+imp_2016 = read_csv("data/SC_303d_lists_2006to2016/PN_2016303d_final.csv")
+#summary(imp_2018) 
+#glimpse(imp_2018)
+#summary(imp_2016)
+#glimpse(imp_2016)
+```
+
+### Getting rid of empty rows in 2018 priority rank
+
+```{r}
+##2018
+dim(imp_2018) #1979 rows
+imp_2018 = imp_2018 %>%
+  filter(`PRIORITY RANK` != "")#%>%
+#filter(`PRIORITY RANK` == "1")#
+dim(imp_2018) # 1979-861 = 1118 rows
+#glimpse(imp_2018)
+
+##2016
+#Getting rid of empty rows in 2016 priority rank
+dim(imp_2016) #1503 rows
+imp_2016 = imp_2016 %>%
+  filter(`PRIORITY RANK` != "") 
+dim(imp_2016) # 1979-535 = 1038 rows 
+#glimpse(imp_2016)
+```
+
+### 2018
+
+```{r}
+#Selecting needed columns
+imp_2018_use = imp_2018 %>%
+  dplyr::select(`PRIORITY RANK`, USE, HUC_12, `CAUSE(S)`)
+
+#glimpse(imp_2018_use)
+#summary(imp_2018_use)
+```
+
+### Bar plots for priority rank, use and cause - 2018
+
+```{r}
+#excluding the 4 rows with multiple ranks
+imp_2018_use_no_multipleranks = imp_2018_use %>% 
+  slice(-c(128:131))
+```
+
+### Bar plot for use and priority rank - 2018
+
+```{r}
+bar_2018_rankuse = ggplot(imp_2018_use_no_multipleranks, aes(x=USE, fill= `PRIORITY RANK`)) +
+  geom_bar() + #stat = "identity")
+  ggtitle("Plot of Priority Rank and Use for 2018")
+
+bar_2018_rankuse
+```
+
+### Bar plot for priority rank and cause - 2018
+
+```{r}
+bar_2018_rankcause = ggplot(imp_2018_use_no_multipleranks, aes(x=`CAUSE(S)`, fill= `PRIORITY RANK`)) +
+  geom_bar() +#stat = "identity") +
+  ggtitle("Plot of Priority Rank and Cause for 2018")+
+  #facet_wrap(~USE)+
+  coord_flip()
+
+bar_2018_rankcause
+```
+
+### Bar plot for use and cause - 2018
+
+```{r}
+bar_2018_usecause = ggplot(imp_2018_use_no_multipleranks, aes(x=`CAUSE(S)`, fill= USE)) +
+  geom_bar() +#stat = "identity") +
+  ggtitle("Plot of Use and Cause for 2018")+
+  #facet_wrap(~USE)+
+  coord_flip()
+
+bar_2018_usecause
+```
+
+## 2016 
+
+```{r}
+#Selecting needed columns
+imp_2016_use = imp_2016 %>%
+  dplyr::select(`PRIORITY RANK`, USE, HUC_12, `CAUSE(S)`) 
+#glimpse(imp_2018_use)
+#summary(imp_2018_use)
+```
+
+### Bar plots for priority rank, use and cause - 2016
+
+```{r}
+#excluding the 4 rows with multiple ranks
+imp_2016_use_no_multipleranks = imp_2016_use %>%
+  slice(-c(115,129,137,138,287,288,563,952))
+```
+
+### Bar plot for use and priority rank - 2016
+
+```{r}
+bar_2016_rankuse = ggplot(imp_2016_use_no_multipleranks, aes(x=USE, fill= `PRIORITY RANK`)) +
+  geom_bar() + #stat = "identity")
+  ggtitle("Plot of Priority Rank and Use for 2016")
+
+bar_2016_rankuse
+```
+
+### Bar plot for priority rank and cause - 2016
+
+```{r}
+bar_2016_rankcause = ggplot(imp_2016_use_no_multipleranks, aes(x=`CAUSE(S)`, fill= `PRIORITY RANK`)) +
+  geom_bar() +
+  ggtitle("Plot of Priority Rank and Cause for 2016")+
+  #facet_wrap(~USE)+
+  coord_flip()
+
+bar_2016_rankcause
+```
+
+### Bar plot for use and cause - 2016
+
+```{r}
+bar_2016_usecause = ggplot(imp_2016_use_no_multipleranks, aes(x=`CAUSE(S)`, fill= USE)) +
+  geom_bar() +
+  ggtitle("Plot of Use and Cause for 2016")+
+  #facet_wrap(~USE)+
+  coord_flip()
+
+bar_2016_usecause
+```
+
+
+
+
+
+
+
+
+
+

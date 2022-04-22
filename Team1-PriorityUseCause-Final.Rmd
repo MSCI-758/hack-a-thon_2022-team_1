@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(fig.width=6, fig.asp = 0.618, collapse=TRUE) 
 ```
 
-# Examining the Relationship between Priority, Use, and Cause in South Carolina Watersheds in 2018.
+# The Relationship between Priority, Use, and Cause in Impaired South Carolina Waters between 2016 and 2018
 
 ### By Madeleine Thompson, Amadi Afua Sefah-Twerefour, Paul Ernst, & Maggie Gaspar
 
@@ -17,44 +17,291 @@ knitr::opts_chunk$set(fig.width=6, fig.asp = 0.618, collapse=TRUE)
 
 ### 1. Introduction.
 
-Blah blah blah
+The South Carolina Department of Health and Environmental Control (SCDHEC, or DHEC) publishes a list of impaired waters every 2 years as per the Federal Clean Water Act (Marcus, 2020). These are determined by a combination of state and federal standards, with data obtained from a wide variety of sources, including beach monitoring stations, water quality assessments, and surveys of populations of bacteria, macroinvertebrates, and so forth. Of these waters that are considered impaired, or harmed in their intended use by some cause, each is assigned a Priority Rank from 1 to 3, with 1 being the highest priority and 3 being the lowest. The highest priority waters are intended to be addressed the soonest, with lower-priority waters taking longer to be fully addressed. Since these priority ranks are not empirically determined, it is necessary to analyze them in order to ensure that the arbitrary nature of their selection has not failed to address certain geographical areas, causes of impairment, or uses of water bodies. 
+
+In this study, we use the latest impaired water body assessments for 2016 and 2018 and divide them by location, priority rank, use, and cause in order to determine where the SCDHEC is focusing its resources and where it might allocate them better in the future.
 
 ***
 
 ### 2. Results & Discussion.
 
-#### 2.1. Spatial Context.
+#### 2.1. Impaired Waters, Basins, and Priority Ranks.
 
-To begin our investigation, we map the watersheds of South Carolina by Priority Rank, Use, and Cause, as stated in section 1 above. These are Figures 1, 2, and 3 respectively below:
+To begin our investigation, we map the water bodies of South Carolina by whether or not they are impaired (Figure 1).
 
-[Figure 1: Priority by watershed]
-Figure 1: Blah
+```{r, echo=FALSE, message=FALSE}
+#Setting up the libraries necessary
+library(tidyverse)
+library(raster)
+library(mapdata)  
+library(marmap)
+library(sf)
+library(readr)
+library(readxl)
 
-[Figure 2: Use by watershed]
-Figure 2: Blah
+#Basins and shapefiles
+basin = st_read("data/SC_Major_River_Basins", "SC_Major_River_Basins")
+shp_imp = st_read("data/bw.SDE.DHEC_303D_18", "bw.SDE.DHEC_303D_18")
+shp_all = st_read("data/bw.SDE.STATIONS", "bw.SDE.STATIONS")
 
-[Figure 3: Cause by watershed]
-Figure 3: Blah
+#Impaired for CSV
+imp = read.csv("data/2018303d_final.csv")
+#Configure for priority rank
+imp = imp %>%
+  filter(PRIORITY.RANK != "") 
+ggplot() +
+  geom_sf(data=basin, aes(fill=Basin)) +
+  geom_sf(data=shp_imp, aes(color=STATUS)) +
+  scale_color_grey() +
+  ggtitle("Basins and Impaired vs. Unimpaired Waters")
+```
 
-We find that [blah].
+**Figure 1:** *Waters listed in the impaired data versus not listed as impaired per each basin in South Carolina.*
 
-#### 2.2. Relationship between [blah].
+We find that the vast majority of coastal waters are not impaired, while midstate waters tend to be more impaired than not. The Catawba and PeeDee basins are particularly noteworthy for a high ratio of impaired to unimpaired interior waters. 
 
-[Figures exploring relationship further]
+Of the waters that are on this list, we plot their priority rank in 2018 (Figure 2) and 2016 (Figure 3).
 
-#### 2.3. [Extra results section if necessary]
+```{r, echo=FALSE}
+# IMPAIRED WATERS 2018
+shp_imp$HUC_12 = as.numeric(shp_imp$HUC_12)
+impaired_map_data = imp %>%
+  left_join(shp_imp, by = "HUC_12") %>%
+  mutate(PRIORITY.RANK = substring(PRIORITY.RANK, 1,1))
+# PLOTTING IMPAIRED WATERS 2018
+ggplot() +
+  geom_sf(data=basin, aes(fill=Basin), alpha = 0.2)+
+  geom_sf(data=impaired_map_data$geometry, aes(color=impaired_map_data$PRIORITY.RANK)) +
+  scale_color_discrete(name = c("Priority Rank","Basin")) +
+  ggtitle("Basins and Impaired Waters by Priority, 2018")
+```
+
+
+**Figure 2:** *Priority Rank of waters listed in the impaired data per each basin in South Carolina, 2018.*
+
+```{r, echo=FALSE}
+imp2016 = read_excel("data/SC_303d_lists_2006to2016/PN_2016303d_final.xls")
+imp2016 = imp2016 %>%
+  filter(`PRIORITY RANK` != "")
+
+# IMPAIRED WATERS 2016
+imp2016$HUC_12 = as.numeric(imp2016$HUC_12)
+impaired2016_map_data = imp2016 %>%
+  left_join(shp_imp, by = "HUC_12") %>%
+  mutate(`PRIORITY RANK` = substring(`PRIORITY RANK`, 1,1))
+
+#PLOTTING IMPAIRED WATERS 2016
+ggplot() +
+  geom_sf(data=basin, aes(fill=Basin), alpha = 0.2)+
+  geom_sf(data=impaired2016_map_data$geometry, aes(color=impaired2016_map_data$`PRIORITY RANK`))+
+  scale_color_discrete(name = c("Priority Rank","Basin")) +
+  ggtitle("Basins and Impaired Waters by Priority, 2016")
+```
+
+**Figure 3:** *Priority Rank of waters listed in the impaired data per each basin in South Carolina, 2016. The original priority rank at the beginning of the study period is assigned to water bodies with multiple ranks over time from multiple measurement.*
+
+```{r, eval=FALSE, echo=FALSE}
+#Counting
+imp = read.csv("data/2018303d_final.csv") # SC Impaired Waters List 303d for 2018
+summary(imp) # There are 861 empty rows
+
+imp_count <- imp %>%
+  count(BASIN)
+
+imp_3 <- imp %>%
+  filter(PRIORITY.RANK == 3) 
+imp_3_count2018 <- imp_3 %>%
+  count(BASIN)
+#highest: 1) Peedee = 251, 2)Santee = 181
+
+imp_2 <- imp %>%
+  filter(PRIORITY.RANK == 2)
+imp_2_count2018 <- imp_2 %>%
+  count(BASIN)
+#highest: 1) Catawaba = 46, Saluda = 46
+
+imp_1 <- imp %>%
+  filter(PRIORITY.RANK == 1)
+imp_1_count2018 <- imp_1 %>%
+  count(BASIN)
+# highest: 1) savannah = 1 
+
+imp2016 <- readxl::read_excel("data/SC_303d_lists_2006to2016/PN_2016303d_final.xls")
+imp2016
+
+imp_count2016 <- imp2016 %>%
+  count(BASIN)
+imp16_3 <- imp2016 %>%
+  filter(`PRIORITY RANK` == 3) 
+imp_3_count2016 <- imp16_3 %>%
+  count(BASIN)
+#highest: 1) Peedee = 240, 2) Santee = 148
+
+imp16_2 <- imp2016 %>%
+  filter(`PRIORITY RANK` == 2) 
+imp_2_count2016 <- imp16_2 %>%
+  count(BASIN)
+#highest: 1) Saluda = 21, 2) Santee = 20 
+
+imp16_1 <- imp2016 %>%
+  filter(`PRIORITY RANK` == 1) 
+imp_1_count2016 <- imp16_1 %>%
+  count(BASIN)
+# highest: 1) Catawba = 40, 2) Peedee = 9 
+```
+
+We find that there is a vast decrease in the number of high priority (rank 1) waters from 2016 to 2018, with a total of 60 entries in 2016 compared to 1 in 2018. Of those high priority waters, 2/3 (40) of them are in the Catawba basin. By contrast, there is an increase in rank 2 waters from 55 entries in 2016 to 79 in 2018. The plurality (21) of these entries are in the Saluda basin in 2016, with this number increasing by 6 to 27 entries in 2018. Notably, most of the Catawba basin watersheds that were rank 1 in 2016 are reclassified as rank 2 in 2018, with 46 entries in total. From this, we can conclude that either a concerted effort has been made in the Catawba basin specifically to address high priority waters, or that the priority of these waters has been downgraded en mass.
+
+#### 2.2. Cause, Use, and Priority Rank in Impaired Waters.
+
+```{r, echo=FALSE, message=FALSE}
+#using read_csv removes dots from column names
+imp_2018 = read_csv("data/2018303d_final.csv") # SC Impaired Waters List 303d for 2018
+imp_2016 = read_excel("data/SC_303d_lists_2006to2016/PN_2016303d_final.xls")
+##    Could read the excel file instead
+
+##2018
+imp_2018 = imp_2018 %>%
+  filter(`PRIORITY RANK` != "")
+
+##2016
+#Getting rid of empty rows in 2016 priority rank
+imp_2016 = imp2016 %>%
+  filter(`PRIORITY RANK` != "") 
+
+### 2018
+#Selecting needed columns
+imp_2018_use = imp_2018 %>%
+  dplyr::select(`PRIORITY RANK`, USE, HUC_12, `CAUSE(S)`)
+
+#excluding the 4 rows with multiple ranks
+imp_2018_use_no_multipleranks = imp_2018_use %>%   dplyr::select(`PRIORITY RANK`, USE, HUC_12, `CAUSE(S)`)
+
+## 2016 
+#Selecting needed columns
+imp_2016_use = imp_2016 %>%
+  dplyr::select(`PRIORITY RANK`, USE, HUC_12, `CAUSE(S)`) 
+
+#excluding the 4 rows with multiple ranks
+imp_2016_use_no_multipleranks = imp_2016_use %>%
+  slice(-c(115,129,137,138,287,288,563,952))
+```
+
+We examine the relationship between Priority Rank and Use in Figure 4.
+
+```{r, echo=FALSE}
+ggplot(imp_2018_use_no_multipleranks, aes(x=USE, fill= `PRIORITY RANK`)) +
+  geom_bar() + #stat = "identity")
+  ggtitle("Plot of Priority Rank and Use for 2018") + 
+  theme_bw() +
+  theme(text=element_text(size=20))
+```
+
+
+**Figure 4:** *Use of different impaired waters, colored by Priority Rank, 2018. Multiple ranks indicate a sequence of rankings over time from multiple readings over the study period.*
+
+About half of all waters are used for AL, or Aquatic Life, listed in the 2018 report submitted by the state of South Carolina to the EPA as waters whose goal is to propagate a "balanced indigenous aquatic community of fauna and flora." The rest of the major uses listed are for fishing, shellfishing, and recreation. We note that no fishing-use-related waters are impaired beyond rank 3, and that the highest absolute number of water bodies that are impaired are used for aquatic life. That stated, the relative fractions for impaired waters at rank 2 are comparable between aquatic life and recreation, with a smaller proportion in shellfish usage.
+
+We continue by examining the priority rank as related to the cause of this priority rank (Figure 5).
+
+```{r, echo=FALSE}
+bar_2018_rankcause = ggplot(imp_2018_use_no_multipleranks, aes(x=`CAUSE(S)`, fill= `PRIORITY RANK`)) +
+  geom_bar() +#stat = "identity") +
+  ggtitle("Plot of Priority Rank and Cause for 2018")+
+  #facet_wrap(~USE)+
+  coord_flip() +
+  theme_bw() +
+  theme(text=element_text(size=20))
+bar_2018_rankcause
+ggsave("figures/bar_2018_rankcause.png", bar_2018_rankcause, device="png", 
+       scale=1, width = 50, height=40, units=c("cm"), dpi=300, limitsize = FALSE)
+```
+
+
+**Figure 5:** *Cause of different impaired waters, colored by Priority Rank, 2018. Multiple causes indicate that no single cause is responsible for impairment.*
+
+We find that the overwhelming cause of impaired waters as a whole is due to adverse macroinvertebrate activity (BIO) and E-coli bacteria/enterococci/Fecal Coliform bacteria (ECOLI/ENTERO/FC). Following behind this is dissolved oxygen (DO) and mercury (HG) with a smaller set of waters impaired by pH imbalances and turbidity concerns. In proportion to the total number of waters impaired, the most waters heavily impaired (priority rank 2) belongs to total phosphorus (TP). To summarize, in 2018, the most waters are biologically impaired, with metal contamination, nutrients, and turbidity all secondary.
+
+Finally for 2018, we examine the relationship between use and cause (Figure 6).
+
+```{r, echo=FALSE}
+bar_2018_usecause = ggplot(imp_2018_use_no_multipleranks, aes(x=`CAUSE(S)`, fill= USE)) +
+  geom_bar() +#stat = "identity") +
+  ggtitle("Plot of Use and Cause for 2018")+
+  #facet_wrap(~USE)+
+  coord_flip()  +
+  theme_bw() +
+  theme(text=element_text(size=20))
+bar_2018_usecause
+ggsave("figures/bar_2018_usecause.png", bar_2018_usecause, device="png", 
+       scale=1, width = 50, height=40, units=c("cm"), dpi=300, limitsize = FALSE)
+```
+
+**Figure 6:** *Cause of different impaired waters, colored by use, 2018.*
+
+The causes and uses of impaired waters are heavily related. As PCBs (Polychlorinated Biphenyls) and mercury impairment are naturally measured through fish catch, these categories will be prevalent for fish catching usages. A similar conclusion can be reached for FC and shellfish, as well as E-coli/enterococci and recreational use. All other categories of cause are classified as aquatic life (mixed). From this figure we can observe why AL and REC are categories with such impaired waters-- bacterial, turbidity, and nutrient causes are all filed under these.
+
+We compare the results in the above Figures 4, 5, and 6 with similar results for 2016, beginning with the relationship between priority rank and use (Figure 7).
+
+```{r, echo=FALSE}
+ggplot(imp_2016_use_no_multipleranks, aes(x=USE, fill= `PRIORITY RANK`)) +
+  geom_bar() + #stat = "identity")
+  ggtitle("Plot of Priority Rank and Use for 2016") +
+  theme_bw() +
+  theme(text=element_text(size=20))
+```
+
+**Figure 7:** *Use of different impaired waters, colored by Priority Rank, 2016.*
+
+Much the same conclusions can be drawn from Figure 7 as from Figure 4, as AL and REC dominate the impaired waters by both total number and number of heavily impaired waters. The only major difference is in the splitting of the large section of priority rank 2 waters in 2018 into rank 1 and rank 2 waters in 2016. In this manner, AL has more rank 1 waters than rank 2 waters, while the inverse is true for REC. Additionally, it must be noted that a larger total of waters were impaired in 2018 than 2016. We investigate further via causes (Figure 8).
+
+```{r, echo=FALSE}
+bar_2016_rankcause = ggplot(imp_2016_use_no_multipleranks, aes(x=`CAUSE(S)`, fill= `PRIORITY RANK`)) +
+  geom_bar() +
+  ggtitle("Plot of Priority Rank and Cause for 2016")+
+  #facet_wrap(~USE)+
+  coord_flip() +
+  theme_bw() +
+  theme(text=element_text(size=20))
+bar_2016_rankcause
+ggsave("figures/bar_2016_rankcause.png", bar_2016_rankcause, device="png", 
+       scale=1, width = 50, height=40, units=c("cm"), dpi=300, limitsize = FALSE)
+```
+
+**Figure 8:** *Cause of different impaired waters, colored by use, 2016.*
+
+The notable changes in total causes between 2016 and 2018 are as follows: from 2016 to 2018, FC, PH, E-coli, and DO increased, while HG decreased and others remained largely the same. We can conclude that the newly impaired waters are primarily due to bacteria and nutrient flux. 
+
+Lastly, we repeat the analysis of Figure 6 for 2016 (Figure 9).
+
+```{r, echo=FALSE}
+bar_2016_usecause = ggplot(imp_2016_use_no_multipleranks, aes(x=`CAUSE(S)`, fill= USE)) +
+  geom_bar() +
+  ggtitle("Plot of Use and Cause for 2016")+
+  #facet_wrap(~USE)+
+  coord_flip() +
+  theme_bw() +
+  theme(text=element_text(size=20))
+bar_2016_usecause
+ggsave("figures/bar_2016_usecause.png", bar_2016_usecause, device="png", 
+       scale=1, width = 50, height=40, units=c("cm"), dpi=300, limitsize = FALSE)
+```
+
+**Figure 9:** *Cause of different impaired waters, colored by use, 2016.*
+
+Our findings here are similar to those in Figure 6 and explain the increases and proportions seen in Figure 7. Fundamentally, AL increases due to nutrient impairment, while REC increases due to bacteria.
 
 ***
 
 ### 3. Conclusion.
 
-[Blah]
+In this analysis, we have examined the relationship between total impaired waters, their locations, priority ranks, uses, and causes between 2016 and 2018. We have found that the majority of heavily impaired waters are inland and clustered into a few basins (Catawba, Peedee, Saluda) in both reports. However, we note that only one water body in 2018 is classified as priority rank 1. We find this is most likely a mass change of Catawba priority 1 waters. Impaired waters increase between 2016 and 2018. Of all main uses and causes, we attribute this to an increase in bacterial impairment in recreational areas as well as nutrient impairment in aquatic life areas. Other major causes, including macroinvertebrates and turbidity, remain relatively constant throughout the period. We conclude that the main focus of DHEC and other responsible entities should be to identify sources of nutrient flux and bacterial infestations, particularly in the Catawba basin.
 
 ***
 
 ### 4. Works Cited.
 
-[Blah]
+Marcus, Mike (2020). *The State of South Carolina’s 2018 Integrated Report (IR)*. Retrieved 22 April 2022.
 
 
 

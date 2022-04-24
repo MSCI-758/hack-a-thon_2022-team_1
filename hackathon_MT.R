@@ -1,67 +1,121 @@
-# Read in boundaries of 8 major river basins in SC
-# https://sc-department-of-health-and-environmental-control-gis-sc-dhec.hub.arcgis.com/datasets/sc-major-river-basins/explore
-basin = st_read("data/SC_Major_River_Basins", "SC_Major_River_Basins")
-basin
+##2018
+imp_2018 = read.csv("data/2018303d_final.csv") 
+summary(imp_2018) 
 
-# Read in shapefile of all sites assessed for 2018 303d list
-# Provided by Wade Cantrell at SC DHEC on 2022-04-11
-shp_imp = st_read("data/bw.SDE.DHEC_303D_18", "bw.SDE.DHEC_303D_18")
-shp_imp
+dim(imp_2018) 
+imp_2018 = imp_2018 %>%
+  filter(PRIORITY.RANK != "") %>%
+  filter(PRIORITY.RANK == c("1", "2", "3")) 
+dim(imp_2018) 
 
-# Larger shapefile of ALL stations (including shellfish monitoring sites, macroinvertebrate sites, much more than the ambient water quality sites used for the 303d list)
-# Provided by Wade Cantrell at SC DHEC on 2022-04-11
-shp_all = st_read("data/bw.SDE.STATIONS", "bw.SDE.STATIONS")
+imp_2018_use = imp_2018 %>%
+  dplyr::select(`PRIORITY.RANK`, USE, HUC_12, `CAUSE.S.`)
+imp_2018_use_no_multipleranks = imp_2018_use %>% 
+  slice(-c(128:131))
+str(imp_2018_use_no_multipleranks)
+summary(imp_2018_use_no_multipleranks)
 
-# SC 2018 303d list: https://scdhec.gov/bow/south-carolina-303d-list-impaired-waters-tmdls
-# Converted 303d list from .xls to .csv before reading in
-imp = read.csv("data/2018303d_final.csv") # SC Impaired Waters List 303d for 2018
-summary(imp) # There are 861 empty rows
+imp_2018_use_no_multipleranks1 <- tidyr::separate(data = imp_2018_use_no_multipleranks, col =  `CAUSE.S.`,
+                         into = c("CAUSES" , "C1", "C2", "C3"),
+                         sep = ", ", remove = TRUE, convert = FALSE, extra = "warn", fill = "warn")
+imp_2018_all_cause <- pivot_longer(data = imp_2018_use_no_multipleranks1, 
+                                   cols = 5:7, 
+                                   values_to = imp_2018_use_no_multipleranks1$CAUSES[142])
 
-imp_count <- imp %>%
-  count(BASIN)
 
-imp_3 <- imp %>%
-  filter(PRIORITY.RANK == 3) 
-imp_3_count2018 <- imp_3 %>%
-  count(BASIN)
-#highest: 1) Peedee = 251, 2)Santee = 181
+bar_2018_rankcauseall = ggplot(imp_2018_all_cause, aes(x=CAUSES, fill= PRIORITY.RANK)) +
+  geom_bar() +#stat = "identity") +
+  ggtitle("Priority Rank and All Causes for 2018")+
+  #facet_wrap(~USE)+
+  coord_flip() +
+  theme_bw() +
+  theme(text=element_text(size=20))
 
-imp_2 <- imp %>%
-  filter(PRIORITY.RANK == 2)
-imp_2_count2018 <- imp_2 %>%
-  count(BASIN)
-#highest: 1) Catawaba = 46, Saluda = 46
+bar_2018_rankcauseall
 
-imp_1 <- imp %>%
-  filter(PRIORITY.RANK == 1)
-imp_1_count2018 <- imp_1 %>%
-  count(BASIN)
-# highest: 1) savannah = 1 
+ggsave("figures/bar_2018_rankcauseall.png", bar_2018_rankcauseall, device="png", 
+       scale=1, width = 50, height=40, units=c("cm"), dpi=300, limitsize = FALSE)
 
+
+imp_2018_use_no_multipleranks$PRIORITY.RANK <- as.numeric(imp_2018_use_no_multipleranks$PRIORITY.RANK)
+
+kruskal.test(imp_2018_use_no_multipleranks$CAUSE.S. ~ imp_2018_use_no_multipleranks$PRIORITY.RANK)
+# p-value = 0.0005702
+
+bar_2018_usecauseall = ggplot(imp_2018_all_cause, aes(x=CAUSES, fill= USE)) +
+  geom_bar() +#stat = "identity") +
+  ggtitle("Use and All Causes for 2018")+
+  #facet_wrap(~USE)+
+  coord_flip()  +
+  theme_bw() +
+  theme(text=element_text(size=20))
+
+bar_2018_usecauseall
+
+ggsave("figures/bar_2018_usecauseall.png", bar_2018_usecauseall, device="png", 
+       scale=1, width = 50, height=40, units=c("cm"), dpi=300, limitsize = FALSE)
+
+kruskal.test(imp_2018_use_no_multipleranks$CAUSE.S. ~ imp_2018_use_no_multipleranks$USE)
+# p-value < 2.2e-16
+
+##2016
 library(readxl)
 
 imp2016 <- readxl::read_excel("data/SC_303d_lists_2006to2016/PN_2016303d_final.xls")
 imp2016
 
-imp_count2016 <- imp2016 %>%
-  count(BASIN)
+dim(imp2016) 
+imp_2016 = imp2016 %>%
+  filter(`PRIORITY RANK` != "") %>%
+  filter(`PRIORITY RANK` == c("1", "2", "3")) 
+dim(imp_2016) 
+
+imp_2016_use = imp_2016 %>%
+  dplyr::select(`PRIORITY RANK`, USE, HUC_12, `CAUSE(S)`)
+imp_2016_use_no_multipleranks = imp_2016_use %>% 
+  slice(-c(128:131))
+str(imp_2016_use_no_multipleranks)
+summary(imp_2016_use_no_multipleranks)
+
+imp_2016_use_no_multipleranks1 <- tidyr::separate(data = imp_2016_use_no_multipleranks, col =  `CAUSE(S)`,
+                                                  into = c("CAUSES" , "C1", "C2", "C3"),
+                                                  sep = ", ", remove = TRUE, convert = FALSE, extra = "warn", fill = "warn")
+imp_2016_all_cause <- pivot_longer(data = imp_2016_use_no_multipleranks1, 
+                                   cols = 5:7, 
+                                   values_to = imp_2016_use_no_multipleranks1$CAUSES[143])
+
+bar_2016_rankcauseall = ggplot(imp_2016_all_cause, aes(x=CAUSES, fill= `PRIORITY RANK`)) +
+  geom_bar() +#stat = "identity") +
+  ggtitle("Priority Rank and All Causes for 2016")+
+  #facet_wrap(~USE)+
+  coord_flip() +
+  theme_bw() +
+  theme(text=element_text(size=20))
+
+bar_2016_rankcauseall
+
+ggsave("figures/bar_2016_rankcauseall.png", bar_2016_rankcauseall, device="png", 
+       scale=1, width = 50, height=40, units=c("cm"), dpi=300, limitsize = FALSE)
 
 
-imp16_3 <- imp2016 %>%
-  filter(`PRIORITY RANK` == 3) 
-imp_3_count2016 <- imp16_3 %>%
-  count(BASIN)
-#highest: 1) Peedee = 240, 2) Santee = 148
+imp_2016_use_no_multipleranks$`PRIORITY RANK` <- as.numeric(imp_2016_use_no_multipleranks$`PRIORITY RANK`)
 
-imp16_2 <- imp2016 %>%
-  filter(`PRIORITY RANK` == 2) 
-imp_2_count2016 <- imp16_2 %>%
-  count(BASIN)
-#highest: 1) Saluda = 21, 2) Santee = 20 
+kruskal.test(imp_2016_use_no_multipleranks$`CAUSE(S)` ~ imp_2016_use_no_multipleranks$`PRIORITY RANK`)
+# p-value = 0.003951
 
-imp16_1 <- imp2016 %>%
-  filter(`PRIORITY RANK` == 1) 
-imp_1_count2016 <- imp16_1 %>%
-  count(BASIN)
-# highest: 1) Catawba = 40, 2) Peedee = 9 
+bar_2016_usecauseall = ggplot(imp_2016_all_cause, aes(x=CAUSES, fill= USE)) +
+  geom_bar() +#stat = "identity") +
+  ggtitle("Use and All Causes for 2016")+
+  #facet_wrap(~USE)+
+  coord_flip()  +
+  theme_bw() +
+  theme(text=element_text(size=20))
+
+bar_2016_usecauseall
+
+ggsave("figures/bar_2016_usecauseall.png", bar_2016_usecauseall, device="png", 
+       scale=1, width = 50, height=40, units=c("cm"), dpi=300, limitsize = FALSE)
+
+kruskal.test(imp_2016_use_no_multipleranks$`CAUSE(S)` ~ imp_2016_use_no_multipleranks$USE)
+# p-value = 9.846e-13
 

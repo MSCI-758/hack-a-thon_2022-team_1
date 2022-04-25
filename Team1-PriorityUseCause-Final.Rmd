@@ -234,7 +234,7 @@ kruskal.test(imp_2018_use_no_multipleranks$CAUSE.S. ~ imp_2018_use_no_multiplera
 ```
 
 
-**Figure 5:** *Cause of different impaired waters, colored by Priority Rank, 2018. Multiple causes indicate that no single cause is responsible for impairment.*
+**Figure 5:** *Cause of different impaired waters, colored by Priority Rank, 2018.*
 
 We find that the overwhelming cause of impaired waters as a whole is due to adverse macroinvertebrate activity (BIO) and bacteria (E-coli/enterococci/Fecal Coliform, ECOLI/ENTERO/FC). Following behind direct biological impairment is dissolved oxygen (DO) and mercury (HG) with a smaller set of waters impaired by pH imbalances and turbidity concerns. In proportion to the total number of waters impaired, the most waters heavily impaired (priority rank 2) belongs to total phosphorus (TP) and total nitrogen (TN). To summarize, in 2018, the most waters are biologically impaired, with metal contamination, nutrients, and turbidity all secondary. We use a Kruskal-Wallis rank sum test to determine if the groups (priority ranks 2 and 3) are significantly different. With 1 degree of freedom and a chi-squared value of 11.871, we arrive at a p-value of 0.0005702, which means that we reject the null hypothesis. In this case, our alternative hypothesis/conclusion is that the two ranks are significantly different between the causes that we see above, which matches our analysis.
 

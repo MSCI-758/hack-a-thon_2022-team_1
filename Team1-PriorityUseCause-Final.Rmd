@@ -29,7 +29,7 @@ In this study, we use the latest impaired water body assessments for 2016 and 20
 
 To begin our investigation, we map the water bodies of South Carolina by whether or not they are impaired (Figure 1).
 
-```{r, echo=FALSE, message=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 #Setting up the libraries necessary
 library(tidyverse)
 library(raster)
@@ -62,7 +62,7 @@ We find that the vast majority of coastal waters are not impaired, while midstat
 
 Of the waters that are on this list, we plot their priority rank in 2018 (Figure 2) and 2016 (Figure 3).
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 # IMPAIRED WATERS 2018
 shp_imp$HUC_12 = as.numeric(shp_imp$HUC_12)
 impaired_map_data = imp %>%
@@ -79,7 +79,7 @@ ggplot() +
 
 **Figure 2:** *Priority Rank of waters listed in the impaired data per each basin in South Carolina, 2018.*
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 imp2016 = read_excel("data/SC_303d_lists_2006to2016/PN_2016303d_final.xls")
 imp2016 = imp2016 %>%
   filter(`PRIORITY RANK` != "")
@@ -100,7 +100,7 @@ ggplot() +
 
 **Figure 3:** *Priority Rank of waters listed in the impaired data per each basin in South Carolina, 2016. The original priority rank at the beginning of the study period is assigned to water bodies with multiple ranks over time from multiple measurement.*
 
-```{r, eval=FALSE, echo=FALSE}
+```{r, eval=FALSE, echo=FALSE, warning=FALSE}
 #Counting
 imp = read.csv("data/2018303d_final.csv") # SC Impaired Waters List 303d for 2018
 summary(imp) # There are 861 empty rows
@@ -154,7 +154,7 @@ We find that there is a vast decrease in the number of high priority (rank 1) wa
 
 #### 2.2. Cause, Use, and Priority Rank in Impaired Waters.
 
-```{r, echo=FALSE, message=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 #using read_csv removes dots from column names
 imp_2018 = read_csv("data/2018303d_final.csv") # SC Impaired Waters List 303d for 2018
 imp_2016 = read_excel("data/SC_303d_lists_2006to2016/PN_2016303d_final.xls")
@@ -189,7 +189,7 @@ imp_2016_use_no_multipleranks = imp_2016_use %>%
 
 We examine the relationship between Priority Rank and Use in Figure 4.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 ggplot(imp_2018_use_no_multipleranks, aes(x=USE, fill= `PRIORITY RANK`)) +
   geom_bar() + #stat = "identity")
   ggtitle("Plot of Priority Rank and Use for 2018") + 
@@ -204,46 +204,66 @@ About half of all waters are used for AL, or Aquatic Life, listed in the 2018 re
 
 We continue by examining the priority rank as related to the cause of this priority rank (Figure 5).
 
-```{r, echo=FALSE}
-bar_2018_rankcause = ggplot(imp_2018_use_no_multipleranks, aes(x=`CAUSE(S)`, fill= `PRIORITY RANK`)) +
+```{r, echo=FALSE, warning=FALSE}
+imp_2018 = read.csv("data/2018303d_final.csv") 
+imp_2018 = imp_2018 %>%
+  filter(PRIORITY.RANK != "") %>%
+  filter(PRIORITY.RANK == c("1", "2", "3")) 
+imp_2018_use = imp_2018 %>%
+  dplyr::select(`PRIORITY.RANK`, USE, HUC_12, `CAUSE.S.`)
+imp_2018_use_no_multipleranks = imp_2018_use %>% 
+  slice(-c(128:131))
+imp_2018_use_no_multipleranks1 <- tidyr::separate(data = imp_2018_use_no_multipleranks, col =  `CAUSE.S.`,
+                         into = c("CAUSES" , "C1", "C2", "C3"),
+                         sep = ", ", remove = TRUE, convert = FALSE, extra = "warn", fill = "warn")
+imp_2018_all_cause <- pivot_longer(data = imp_2018_use_no_multipleranks1, 
+                                   cols = 5:7, 
+                                   values_to = imp_2018_use_no_multipleranks1$CAUSES[142])
+bar_2018_rankcauseall = ggplot(imp_2018_all_cause, aes(x=CAUSES, fill= PRIORITY.RANK)) +
   geom_bar() +#stat = "identity") +
-  ggtitle("Plot of Priority Rank and Cause for 2018")+
+  ggtitle("Priority Rank and All Causes for 2018")+
   #facet_wrap(~USE)+
   coord_flip() +
   theme_bw() +
   theme(text=element_text(size=20))
-bar_2018_rankcause
-ggsave("figures/bar_2018_rankcause.png", bar_2018_rankcause, device="png", 
+bar_2018_rankcauseall
+ggsave("figures/bar_2018_rankcauseall.png", bar_2018_rankcauseall, device="png", 
        scale=1, width = 50, height=40, units=c("cm"), dpi=300, limitsize = FALSE)
+imp_2018_use_no_multipleranks$PRIORITY.RANK <- as.numeric(imp_2018_use_no_multipleranks$PRIORITY.RANK)
+kruskal.test(imp_2018_use_no_multipleranks$CAUSE.S. ~ imp_2018_use_no_multipleranks$PRIORITY.RANK)
 ```
 
 
 **Figure 5:** *Cause of different impaired waters, colored by Priority Rank, 2018. Multiple causes indicate that no single cause is responsible for impairment.*
 
-We find that the overwhelming cause of impaired waters as a whole is due to adverse macroinvertebrate activity (BIO) and E-coli bacteria/enterococci/Fecal Coliform bacteria (ECOLI/ENTERO/FC). Following behind this is dissolved oxygen (DO) and mercury (HG) with a smaller set of waters impaired by pH imbalances and turbidity concerns. In proportion to the total number of waters impaired, the most waters heavily impaired (priority rank 2) belongs to total phosphorus (TP). To summarize, in 2018, the most waters are biologically impaired, with metal contamination, nutrients, and turbidity all secondary.
+We find that the overwhelming cause of impaired waters as a whole is due to adverse macroinvertebrate activity (BIO) and bacteria (E-coli/enterococci/Fecal Coliform, ECOLI/ENTERO/FC). Following behind direct biological impairment is dissolved oxygen (DO) and mercury (HG) with a smaller set of waters impaired by pH imbalances and turbidity concerns. In proportion to the total number of waters impaired, the most waters heavily impaired (priority rank 2) belongs to total phosphorus (TP) and total nitrogen (TN). To summarize, in 2018, the most waters are biologically impaired, with metal contamination, nutrients, and turbidity all secondary. We use a Kruskal-Wallis rank sum test to determine if the groups (priority ranks 2 and 3) are significantly different. With 1 degree of freedom and a chi-squared value of 11.871, we arrive at a p-value of 0.0005702, which means that we reject the null hypothesis. In this case, our alternative hypothesis/conclusion is that the two ranks are significantly different between the causes that we see above, which matches our analysis.
 
 Finally for 2018, we examine the relationship between use and cause (Figure 6).
 
-```{r, echo=FALSE}
-bar_2018_usecause = ggplot(imp_2018_use_no_multipleranks, aes(x=`CAUSE(S)`, fill= USE)) +
+```{r, echo=FALSE, warning=FALSE}
+bar_2018_usecauseall = ggplot(imp_2018_all_cause, aes(x=CAUSES, fill= USE)) +
   geom_bar() +#stat = "identity") +
-  ggtitle("Plot of Use and Cause for 2018")+
+  ggtitle("Use and All Causes for 2018")+
   #facet_wrap(~USE)+
   coord_flip()  +
   theme_bw() +
   theme(text=element_text(size=20))
-bar_2018_usecause
-ggsave("figures/bar_2018_usecause.png", bar_2018_usecause, device="png", 
+
+bar_2018_usecauseall
+
+ggsave("figures/bar_2018_usecauseall.png", bar_2018_usecauseall, device="png", 
        scale=1, width = 50, height=40, units=c("cm"), dpi=300, limitsize = FALSE)
+
+kruskal.test(imp_2018_use_no_multipleranks$CAUSE.S. ~ imp_2018_use_no_multipleranks$USE)
 ```
 
 **Figure 6:** *Cause of different impaired waters, colored by use, 2018.*
 
-The causes and uses of impaired waters are heavily related. As PCBs (Polychlorinated Biphenyls) and mercury impairment are naturally measured through fish catch, these categories will be prevalent for fish catching usages. A similar conclusion can be reached for FC and shellfish, as well as E-coli/enterococci and recreational use. All other categories of cause are classified as aquatic life (mixed). From this figure we can observe why AL and REC are categories with such impaired waters-- bacterial, turbidity, and nutrient causes are all filed under these.
+The causes and uses of impaired waters are heavily related. As PCBs (Polychlorinated Biphenyls) and mercury impairment are naturally measured through fish catch, these categories will be prevalent for fish catching usages. A similar conclusion can be reached for FC and shellfish, as well as E-coli/enterococci and recreational use. All other categories of cause are classified as aquatic life (mixed). From this figure we can observe why AL and REC are categories with such impaired waters-- bacterial, turbidity, and nutrient causes are all filed under these. Also unsurprisingly, our Kruskal-Wallis rank sum test returns a significant value for this set, a given that the uses and causes do not mix.
 
 We compare the results in the above Figures 4, 5, and 6 with similar results for 2016, beginning with the relationship between priority rank and use (Figure 7).
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 ggplot(imp_2016_use_no_multipleranks, aes(x=USE, fill= `PRIORITY RANK`)) +
   geom_bar() + #stat = "identity")
   ggtitle("Plot of Priority Rank and Use for 2016") +
@@ -255,47 +275,77 @@ ggplot(imp_2016_use_no_multipleranks, aes(x=USE, fill= `PRIORITY RANK`)) +
 
 Much the same conclusions can be drawn from Figure 7 as from Figure 4, as AL and REC dominate the impaired waters by both total number and number of heavily impaired waters. The only major difference is in the splitting of the large section of priority rank 2 waters in 2018 into rank 1 and rank 2 waters in 2016. In this manner, AL has more rank 1 waters than rank 2 waters, while the inverse is true for REC. Additionally, it must be noted that a larger total of waters were impaired in 2018 than 2016. We investigate further via causes (Figure 8).
 
-```{r, echo=FALSE}
-bar_2016_rankcause = ggplot(imp_2016_use_no_multipleranks, aes(x=`CAUSE(S)`, fill= `PRIORITY RANK`)) +
-  geom_bar() +
-  ggtitle("Plot of Priority Rank and Cause for 2016")+
+```{r, echo=FALSE, warning=FALSE}
+imp2016 <- readxl::read_excel("data/SC_303d_lists_2006to2016/PN_2016303d_final.xls")
+
+imp_2016 = imp2016 %>%
+  filter(`PRIORITY RANK` != "") %>%
+  filter(`PRIORITY RANK` == c("1", "2", "3")) 
+
+imp_2016_use = imp_2016 %>%
+  dplyr::select(`PRIORITY RANK`, USE, HUC_12, `CAUSE(S)`)
+imp_2016_use_no_multipleranks = imp_2016_use %>% 
+  slice(-c(128:131))
+
+imp_2016_use_no_multipleranks1 <- tidyr::separate(data = imp_2016_use_no_multipleranks, col =  `CAUSE(S)`,
+                                                  into = c("CAUSES" , "C1", "C2", "C3"),
+                                                  sep = ", ", remove = TRUE, convert = FALSE, extra = "warn", fill = "warn")
+imp_2016_all_cause <- pivot_longer(data = imp_2016_use_no_multipleranks1, 
+                                   cols = 5:7, 
+                                   values_to = imp_2016_use_no_multipleranks1$CAUSES[143])
+
+bar_2016_rankcauseall = ggplot(imp_2016_all_cause, aes(x=CAUSES, fill= `PRIORITY RANK`)) +
+  geom_bar() +#stat = "identity") +
+  ggtitle("Priority Rank and All Causes for 2016")+
   #facet_wrap(~USE)+
   coord_flip() +
   theme_bw() +
   theme(text=element_text(size=20))
-bar_2016_rankcause
-ggsave("figures/bar_2016_rankcause.png", bar_2016_rankcause, device="png", 
+
+bar_2016_rankcauseall
+
+ggsave("figures/bar_2016_rankcauseall.png", bar_2016_rankcauseall, device="png", 
        scale=1, width = 50, height=40, units=c("cm"), dpi=300, limitsize = FALSE)
+
+imp_2016_use_no_multipleranks$`PRIORITY RANK` <- as.numeric(imp_2016_use_no_multipleranks$`PRIORITY RANK`)
+
+kruskal.test(imp_2016_use_no_multipleranks$`CAUSE(S)` ~ imp_2016_use_no_multipleranks$`PRIORITY RANK`)
+# p-value = 0.003951
 ```
 
 **Figure 8:** *Cause of different impaired waters, colored by use, 2016.*
 
-The notable changes in total causes between 2016 and 2018 are as follows: from 2016 to 2018, FC, PH, E-coli, and DO increased, while HG decreased and others remained largely the same. We can conclude that the newly impaired waters are primarily due to bacteria and nutrient flux. 
+The notable changes in total causes between 2016 and 2018 are as follows: from 2016 to 2018, FC, PH, E-coli, and DO increased, while HG decreased and others remained largely the same. We can conclude that the newly impaired waters are primarily due to bacteria and nutrient flux. We observe that a dispropportionate number of priority rank 2 waters are impaired by Chlorophyll-*a* (CHLA) in 2016, even though there are fewer overall waters impaired by CHLA in 2016. Otherwise, the ratio of more heavily impaired waters (ranks 1 and 2) are comparatively similar, although there are an appreciable number of rank 1 waters in both bacterial (FC, ECOLI) and chemical (TP, TN, PH) causes. In fact, TN has more rank 1 waters than rank 3. As we expect from this highly variable distribution, we do have a significant difference between our rank distributions with a p-value of 0.003951 (Kruskal-Wallis rank sum test).
 
 Lastly, we repeat the analysis of Figure 6 for 2016 (Figure 9).
 
-```{r, echo=FALSE}
-bar_2016_usecause = ggplot(imp_2016_use_no_multipleranks, aes(x=`CAUSE(S)`, fill= USE)) +
-  geom_bar() +
-  ggtitle("Plot of Use and Cause for 2016")+
+```{r, echo=FALSE, warning=FALSE}
+bar_2016_usecauseall = ggplot(imp_2016_all_cause, aes(x=CAUSES, fill= USE)) +
+  geom_bar() +#stat = "identity") +
+  ggtitle("Use and All Causes for 2016")+
   #facet_wrap(~USE)+
-  coord_flip() +
+  coord_flip()  +
   theme_bw() +
   theme(text=element_text(size=20))
-bar_2016_usecause
-ggsave("figures/bar_2016_usecause.png", bar_2016_usecause, device="png", 
+
+bar_2016_usecauseall
+
+ggsave("figures/bar_2016_usecauseall.png", bar_2016_usecauseall, device="png", 
        scale=1, width = 50, height=40, units=c("cm"), dpi=300, limitsize = FALSE)
+
+kruskal.test(imp_2016_use_no_multipleranks$`CAUSE(S)` ~ imp_2016_use_no_multipleranks$USE)
+# p-value = 9.846e-13
 ```
 
 **Figure 9:** *Cause of different impaired waters, colored by use, 2016.*
 
-Our findings here are similar to those in Figure 6 and explain the increases and proportions seen in Figure 7. Fundamentally, AL increases due to nutrient impairment, while REC increases due to bacteria.
+Our findings here are similar to those in Figure 6 and explain the increases and proportions seen in Figure 7. Fundamentally, AL increases due to nutrient impairment, while REC increases due to bacteria. As expected from our previous results, these distributions are significantly different (Kruskal-Wallis Test).
 
 ***
 
 ### 3. Conclusion.
 
-In this analysis, we have examined the relationship between total impaired waters, their locations, priority ranks, uses, and causes between 2016 and 2018. We have found that the majority of heavily impaired waters are inland and clustered into a few basins (Catawba, Peedee, Saluda) in both reports. However, we note that only one water body in 2018 is classified as priority rank 1. We find this is most likely a mass change of Catawba priority 1 waters. Impaired waters increase between 2016 and 2018. Of all main uses and causes, we attribute this to an increase in bacterial impairment in recreational areas as well as nutrient impairment in aquatic life areas. Other major causes, including macroinvertebrates and turbidity, remain relatively constant throughout the period. We conclude that the main focus of DHEC and other responsible entities should be to identify sources of nutrient flux and bacterial infestations, particularly in the Catawba basin.
+In this analysis, we have examined the relationship between total impaired waters, their locations, priority ranks, uses, and causes between 2016 and 2018. We have found that the majority of heavily impaired waters are inland and clustered into a few basins (Catawba, Peedee, Saluda) in both reports. However, we note that only one water body in 2018 is classified as priority rank 1. We find this is most likely a mass change of Catawba priority 1 waters. Impaired waters increase between 2016 and 2018. Of all main uses and causes, we attribute this to an increase in bacterial impairment in recreational areas as well as nutrient impairment in aquatic life areas. Other major causes, including macroinvertebrates and turbidity, remain relatively constant throughout the period. We conclude that the main focus of DHEC and other responsible entities has been, and should continue to be, to identify sources of nutrient flux/pH and bacterial infestations, particularly in the Catawba basin. Additionally, we question the elimination of priority rank 1 from 2018. This seems to indicate that DHEC does not view any waters as immediately in need of treatment. Is this due to a funding shortfall, a lack of manpower, or are all waters actually that much improved from 2016? Future rankings, particularly the 2020 list, which should be released this year in 2022, may elucidate this question and to what degree DHEC is succeeding in improving the rankings seen above in our analysis.
 
 ***
 

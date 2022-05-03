@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.width=6, fig.asp = 0.618, collapse=TRUE) 
+knitr::opts_chunk$set(fig.width=10, fig.asp = 0.618, collapse=TRUE) 
 ```
 
 # The Relationship between Priority, Use, and Cause in Impaired South Carolina Waters between 2016 and 2018
